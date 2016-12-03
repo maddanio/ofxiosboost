@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 
 #cpm
 set(CPM_MODULE_NAME "ofxiOSBoost")
-set(CPM_LIBRARIES ${CPM_LIBRARIES} libs/boost/ios/libboost.a)
+set(CPM_LIBRARIES ${CPM_LIBRARIES} ${CMAKE_SOURCE_DIR}/libs/boost/ios/libboost.a)
 CPM_ExportAdditionalIncludeDir(libs/boost/include/)
 include(cpm_bootstrap.cmake)
 
