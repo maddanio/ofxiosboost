@@ -24,13 +24,13 @@ here="`dirname \"$0\"`"
 echo "cd-ing to $here"
 cd "$here" || exit 1
 
-CPPSTD=c++11    #c++89, c++99, c++14
+CPPSTD=c++14    #c++89, c++99, c++14
 STDLIB=libc++   # libstdc++
 COMPILER=clang++
 PARALLEL_MAKE=16   # how many threads to make boost with
 
-BOOST_V1=1.60.0
-BOOST_V2=1_60_0
+BOOST_V1=1.63.0
+BOOST_V2=1_63_0
 
 #BITCODE="-fembed-bitcode"  # Uncomment this line for Bitcode generation
 
