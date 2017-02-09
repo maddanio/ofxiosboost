@@ -7,8 +7,8 @@ Boost is the library that can (and should) be used to ease c++ development.
                    DESC
   s.homepage     = "http://www.boost.org"
   s.license      = 'Boost'
-  s.author       = { "Danoli3" => "danoli3@gmail.com" }
-  s.source       = { :git => "https://github.com/danoli3/ofxiOSBoost.git", :tag => "#{s.version}" }
+  s.author       = { "Daniel Oberhoff" => "danieloberhoff@gmail.com" }
+  s.source       = { :git => "https://github.com/maddanio/ofxiosboost.git", :tag => "#{s.version}" }
 
   s.platform     = :ios, '8.0'
   s.ios.deployment_target = '8.0'
