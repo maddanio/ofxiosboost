@@ -2,8 +2,8 @@
 
 // Copyright (c) 2007-2012 Barend Gehrels, Amsterdam, the Netherlands.
 
-// This file was modified by Oracle on 2014, 2016.
-// Modifications copyright (c) 2014-2016 Oracle and/or its affiliates.
+// This file was modified by Oracle on 2014, 2016, 2017.
+// Modifications copyright (c) 2014-2017 Oracle and/or its affiliates.
 
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
@@ -18,14 +18,12 @@
 #include <boost/math/constants/constants.hpp>
 
 #include <boost/geometry/core/radius.hpp>
-#include <boost/geometry/core/srs.hpp>
 
 #include <boost/geometry/util/condition.hpp>
 #include <boost/geometry/util/math.hpp>
 
-#include <boost/geometry/algorithms/detail/flattening.hpp>
-
 #include <boost/geometry/formulas/differential_quantities.hpp>
+#include <boost/geometry/formulas/flattening.hpp>
 #include <boost/geometry/formulas/result_direct.hpp>
 
 
@@ -85,7 +83,7 @@ public:
 
         CT const radius_a = CT(get_radius<0>(spheroid));
         CT const radius_b = CT(get_radius<2>(spheroid));
-        CT const flattening = geometry::detail::flattening<CT>(spheroid);
+        CT const flattening = formula::flattening<CT>(spheroid);
 
         CT const sin_azimuth12 = sin(azimuth12);
         CT const cos_azimuth12 = cos(azimuth12);
