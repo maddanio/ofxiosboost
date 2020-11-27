@@ -24,19 +24,19 @@ here="`dirname \"$0\"`"
 echo "cd-ing to $here"
 cd "$here" || exit 1
 
-CPPSTD=c++14    #c++89, c++99, c++14
+CPPSTD=c++17    #c++89, c++99, c++14
 STDLIB=libc++   # libstdc++
 COMPILER=clang++
-PARALLEL_MAKE=16   # how many threads to make boost with
+PARALLEL_MAKE=4   # how many threads to make boost with
 
-BOOST_V1=1.70.0
-BOOST_V2=1_70_0
+BOOST_V1=1.74.0
+BOOST_V2=1_74_0
 
 #BITCODE="-fembed-bitcode"  # Uncomment this line for Bitcode generation
 
 CURRENTPATH=`pwd`
 LOGDIR="$CURRENTPATH/build/logs/"
-IOS_MIN_VERSION=7.0
+IOS_MIN_VERSION=13.0
 SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version`
 OSX_SDKVERSION=`xcrun -sdk macosx --show-sdk-version`
 DEVELOPER=`xcode-select -print-path`
@@ -163,7 +163,8 @@ downloadBoost()
 {
     if [ ! -s $TARBALLDIR/boost_${BOOST_VERSION2}.tar.bz2 ]; then
         echo "Downloading boost ${BOOST_VERSION}"
-        curl -L -o $TARBALLDIR/boost_${BOOST_VERSION2}.tar.bz2 http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION2}.tar.bz2/download
+        echo curl -L -o $TARBALLDIR/boost_${BOOST_VERSION2}.tar.bz2 https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/boost_${BOOST_VERSION2}.tar.bz2
+        curl -L -o $TARBALLDIR/boost_${BOOST_VERSION2}.tar.bz2 https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/boost_${BOOST_VERSION2}.tar.bz2
     fi
 
     doneSection
@@ -206,12 +207,12 @@ updateBoost()
 
     cat >> $BOOST_SRC/tools/build/example/user-config.jam <<EOF
 using darwin : ${IPHONE_SDKVERSION}~iphone
-: $XCODE_ROOT/Toolchains/XcodeDefault.xctoolchain/usr/bin/$COMPILER -arch armv7s -arch armv7 -arch arm64 $EXTRA_CPPFLAGS "-isysroot ${CROSS_TOP_IOS}/SDKs/${CROSS_SDK_IOS}" -I${CROSS_TOP_IOS}/SDKs/${CROSS_SDK_IOS}/usr/include/
+: $XCODE_ROOT/Toolchains/XcodeDefault.xctoolchain/usr/bin/$COMPILER -arch arm64 $EXTRA_CPPFLAGS "-isysroot ${CROSS_TOP_IOS}/SDKs/${CROSS_SDK_IOS}" -I${CROSS_TOP_IOS}/SDKs/${CROSS_SDK_IOS}/usr/include/
 : <striper> <root>$XCODE_ROOT/Platforms/iPhoneOS.platform/Developer
 : <architecture>arm <target-os>iphone
 ;
 using darwin : ${IPHONE_SDKVERSION}~iphonesim
-: $XCODE_ROOT/Toolchains/XcodeDefault.xctoolchain/usr/bin/$COMPILER -arch i386 -arch x86_64 $EXTRA_CPPFLAGS "-isysroot ${CROSS_TOP_SIM}/SDKs/${CROSS_SDK_SIM}" -I${CROSS_TOP_SIM}/SDKs/${CROSS_SDK_SIM}/usr/include/
+: $XCODE_ROOT/Toolchains/XcodeDefault.xctoolchain/usr/bin/$COMPILER -arch x86_64 $EXTRA_CPPFLAGS "-isysroot ${CROSS_TOP_SIM}/SDKs/${CROSS_SDK_SIM}" -I${CROSS_TOP_SIM}/SDKs/${CROSS_SDK_SIM}/usr/include/
 : <striper> <root>$XCODE_ROOT/Platforms/iPhoneSimulator.platform/Developer
 : <architecture>x86 <target-os>iphone
 ;
@@ -246,7 +247,7 @@ bootstrapBoost()
 }
 
 #===============================================================================
-
+    
 buildBoostForIPhoneOS()
 {
     cd $BOOST_SRC
@@ -261,7 +262,8 @@ buildBoostForIPhoneOS()
     echo "To see status in realtime check:"
     echo " ${LOG}"
     echo "Please stand by..."
-    ./bjam -j${PARALLEL_MAKE} --build-dir=iphone-build -sBOOST_BUILD_USER_CONFIG=$BOOST_SRC/tools/build/example/user-config.jam --stagedir=iphone-build/stage --prefix=$PREFIXDIR --toolset=darwin-${IPHONE_SDKVERSION}~iphone cxxflags="-miphoneos-version-min=$IOS_MIN_VERSION -stdlib=$STDLIB $BITCODE" variant=release linkflags="-stdlib=$STDLIB" architecture=arm target-os=iphone macosx-version=iphone-${IPHONE_SDKVERSION} define=_LITTLE_ENDIAN link=static stage > "${LOG}" 2>&1
+    echo "./b2 -j${PARALLEL_MAKE} --build-dir=iphone-build -sBOOST_BUILD_USER_CONFIG=$BOOST_SRC/tools/build/example/user-config.jam --stagedir=iphone-build/stage --prefix=$PREFIXDIR --toolset=darwin-${IPHONE_SDKVERSION}~iphone cxxflags="-miphoneos-version-min=$IOS_MIN_VERSION -stdlib=$STDLIB $BITCODE" variant=release linkflags="-stdlib=$STDLIB" architecture=arm target-os=iphone macosx-version=iphone-${IPHONE_SDKVERSION} define=_LITTLE_ENDIAN link=static stage > "${LOG}" 2>&1"
+    ./b2 -j${PARALLEL_MAKE} --build-dir=iphone-build -sBOOST_BUILD_USER_CONFIG=$BOOST_SRC/tools/build/example/user-config.jam --stagedir=iphone-build/stage --prefix=$PREFIXDIR --toolset=darwin-${IPHONE_SDKVERSION}~iphone cxxflags="-miphoneos-version-min=$IOS_MIN_VERSION -stdlib=$STDLIB $BITCODE" variant=release linkflags="-stdlib=$STDLIB" architecture=arm target-os=iphone macosx-version=iphone-${IPHONE_SDKVERSION} define=_LITTLE_ENDIAN link=static stage > "${LOG}" 2>&1
     if [ $? != 0 ]; then 
         tail -n 100 "${LOG}"
         echo "Problem while Building iphone-build stage - Please check ${LOG}"
@@ -276,7 +278,8 @@ buildBoostForIPhoneOS()
     echo "To see status in realtime check:"
     echo " ${LOG}"
     echo "Please stand by..."
-    ./bjam -j${PARALLEL_MAKE} --build-dir=iphone-build -sBOOST_BUILD_USER_CONFIG=$BOOST_SRC/tools/build/example/user-config.jam --stagedir=iphone-build/stage --prefix=$PREFIXDIR --toolset=darwin-${IPHONE_SDKVERSION}~iphone cxxflags="-miphoneos-version-min=$IOS_MIN_VERSION -stdlib=$STDLIB $BITCODE" variant=release linkflags="-stdlib=$STDLIB" architecture=arm target-os=iphone macosx-version=iphone-${IPHONE_SDKVERSION} define=_LITTLE_ENDIAN link=static install > "${LOG}" 2>&1
+    echo "/b2 -j${PARALLEL_MAKE} --build-dir=iphone-build -sBOOST_BUILD_USER_CONFIG=$BOOST_SRC/tools/build/example/user-config.jam --stagedir=iphone-build/stage --prefix=$PREFIXDIR --toolset=darwin-${IPHONE_SDKVERSION}~iphone cxxflags="-miphoneos-version-min=$IOS_MIN_VERSION -stdlib=$STDLIB $BITCODE" variant=release linkflags="-stdlib=$STDLIB" architecture=arm target-os=iphone macosx-version=iphone-${IPHONE_SDKVERSION} define=_LITTLE_ENDIAN link=static install > "${LOG}" 2>&1"
+    ./b2 -j${PARALLEL_MAKE} --build-dir=iphone-build -sBOOST_BUILD_USER_CONFIG=$BOOST_SRC/tools/build/example/user-config.jam --stagedir=iphone-build/stage --prefix=$PREFIXDIR --toolset=darwin-${IPHONE_SDKVERSION}~iphone cxxflags="-miphoneos-version-min=$IOS_MIN_VERSION -stdlib=$STDLIB $BITCODE" variant=release linkflags="-stdlib=$STDLIB" architecture=arm target-os=iphone macosx-version=iphone-${IPHONE_SDKVERSION} define=_LITTLE_ENDIAN link=static install > "${LOG}" 2>&1
     if [ $? != 0 ]; then 
         tail -n 100 "${LOG}"
         echo "Problem while Building iphone-build install - Please check ${LOG}"
@@ -318,38 +321,23 @@ scrunchAllLibsTogetherInOneLibPerPlatform()
 
     ALL_LIBS=$(find iphone-build/stage/lib -name "libboost_*.a" | sed -n 's/.*\(libboost_.*.a\)/\1/p' | paste -sd " " -)
 
-    echo Splitting all existing fat binaries...
+    echo "Decomposing each architecture's .a files"
 
     for NAME in $ALL_LIBS; do
 
-        $ARM_DEV_CMD lipo "iphone-build/stage/lib/$NAME" -thin armv7 -o $IOSBUILDDIR/armv7/$NAME
-        $ARM_DEV_CMD lipo "iphone-build/stage/lib/$NAME" -thin armv7s -o $IOSBUILDDIR/armv7s/$NAME
-		$ARM_DEV_CMD lipo "iphone-build/stage/lib/$NAME" -thin arm64 -o $IOSBUILDDIR/arm64/$NAME
+        echo $NAME
+        cd $IOSBUILDDIR/arm64/obj
+		$ARM_DEV_CMD ar -x "$BOOST_SRC/iphone-build/stage/lib/$NAME"
 
 		#$ARM_DEV_CMD lipo "iphonesim-build/stage/lib/$NAME" -thin i386 -o $IOSBUILDDIR/i386/$NAME
 		#$ARM_DEV_CMD lipo "iphonesim-build/stage/lib/$NAME" -thin x86_64 -o $IOSBUILDDIR/x86_64/$NAME
 
     done
 
-    echo "Decomposing each architecture's .a files"
-
-    for NAME in $ALL_LIBS; do
-        echo Decomposing $NAME...
-        (cd $IOSBUILDDIR/armv7/obj; ar -x ../$NAME );
-        (cd $IOSBUILDDIR/armv7s/obj; ar -x ../$NAME );
-		(cd $IOSBUILDDIR/arm64/obj; ar -x ../$NAME );
-        #(cd $IOSBUILDDIR/i386/obj; ar -x ../$NAME );
-		#(cd $IOSBUILDDIR/x86_64/obj; ar -x ../$NAME );
-    done
-
     echo "Linking each architecture into an uberlib ($ALL_LIBS => libboost.a )"
 
     rm $IOSBUILDDIR/*/libboost.a
     
-    echo ...armv7
-    (cd $IOSBUILDDIR/armv7; $ARM_DEV_CMD ar crus libboost.a obj/*.o; )
-    echo ...armv7s
-    (cd $IOSBUILDDIR/armv7s; $ARM_DEV_CMD ar crus libboost.a obj/*.o; )
     echo ...arm64
     (cd $IOSBUILDDIR/arm64; $ARM_DEV_CMD ar crus libboost.a obj/*.o; )
     #echo ...i386
@@ -359,8 +347,6 @@ scrunchAllLibsTogetherInOneLibPerPlatform()
 
     echo "Making fat lib for iOS Boost $BOOST_VERSION"
     lipo -c \
-            $IOSBUILDDIR/armv7/libboost.a \
-            $IOSBUILDDIR/armv7s/libboost.a \
             $IOSBUILDDIR/arm64/libboost.a \
             -output $OUTPUT_DIR_LIB/libboost.a
 
@@ -401,8 +387,8 @@ buildIncludes()
 
 mkdir -p $IOSBUILDDIR
 
-cleanEverythingReadyToStart #may want to comment if repeatedly running during dev
-restoreBoost
+#cleanEverythingReadyToStart #may want to comment if repeatedly running during dev
+#restoreBoost
 
 echo "BOOST_VERSION:     $BOOST_VERSION"
 echo "BOOST_LIBS:        $BOOST_LIBS"
@@ -418,19 +404,19 @@ else
     echo "BITCODE EMBEDDED: YES with: $BITCODE"
 fi
 
-downloadBoost
-unpackBoost
-inventMissingHeaders
-prepare
-bootstrapBoost
-updateBoost
-buildBoostForIPhoneOS
+#downloadBoost
+#unpackBoost
+#inventMissingHeaders
+#prepare
+#bootstrapBoost
+#updateBoost
+#buildBoostForIPhoneOS
 scrunchAllLibsTogetherInOneLibPerPlatform
-buildIncludes
+#buildIncludes
 
-restoreBoost
+#restoreBoost
 
-postcleanEverything
+#postcleanEverything
 
 echo "Completed successfully"
 
