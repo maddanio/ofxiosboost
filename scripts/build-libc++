@@ -29,14 +29,14 @@ STDLIB=libc++   # libstdc++
 COMPILER=clang++
 PARALLEL_MAKE=4   # how many threads to make boost with
 
-BOOST_V1=1.74.0
-BOOST_V2=1_74_0
+BOOST_V1=1.83.0
+BOOST_V2=1_83_0
 
 #BITCODE="-fembed-bitcode"  # Uncomment this line for Bitcode generation
 
 CURRENTPATH=`pwd`
 LOGDIR="$CURRENTPATH/build/logs/"
-IOS_MIN_VERSION=13.0
+IOS_MIN_VERSION=15.0
 SDKVERSION=`xcrun -sdk iphoneos --show-sdk-version`
 OSX_SDKVERSION=`xcrun -sdk macosx --show-sdk-version`
 DEVELOPER=`xcode-select -print-path`
@@ -163,8 +163,7 @@ downloadBoost()
 {
     if [ ! -s $TARBALLDIR/boost_${BOOST_VERSION2}.tar.bz2 ]; then
         echo "Downloading boost ${BOOST_VERSION}"
-        echo curl -L -o $TARBALLDIR/boost_${BOOST_VERSION2}.tar.bz2 https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/boost_${BOOST_VERSION2}.tar.bz2
-        curl -L -o $TARBALLDIR/boost_${BOOST_VERSION2}.tar.bz2 https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/boost_${BOOST_VERSION2}.tar.bz2
+        curl -L -o $TARBALLDIR/boost_${BOOST_VERSION2}.tar.bz2 https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/boost_${BOOST_VERSION2}.tar.bz2
     fi
 
     doneSection
@@ -404,15 +403,15 @@ else
     echo "BITCODE EMBEDDED: YES with: $BITCODE"
 fi
 
-#downloadBoost
-#unpackBoost
-#inventMissingHeaders
-#prepare
-#bootstrapBoost
-#updateBoost
-#buildBoostForIPhoneOS
+downloadBoost
+unpackBoost
+inventMissingHeaders
+prepare
+bootstrapBoost
+updateBoost
+buildBoostForIPhoneOS
 scrunchAllLibsTogetherInOneLibPerPlatform
-#buildIncludes
+buildIncludes
 
 #restoreBoost
 

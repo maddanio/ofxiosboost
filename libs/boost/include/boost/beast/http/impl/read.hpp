@@ -97,6 +97,10 @@ public:
         , d_(beast::allocate_stable<data>(
             *this, s, m))
     {
+        BOOST_ASIO_HANDLER_LOCATION((
+            __FILE__, __LINE__,
+            "http::async_read(msg)"));
+
         http::async_read(d_.s, b, d_.p, std::move(*this));
     }
 
@@ -195,7 +199,7 @@ public:
                     auto const size = read_size(b_, 65536);
                     if(size == 0)
                     {
-                        ec = error::buffer_overflow;
+                        BOOST_BEAST_ASSIGN_EC(ec, error::buffer_overflow);
                         goto upcall;
                     }
                     auto const mb =
@@ -203,6 +207,11 @@ public:
                             b_, size, ec, error::buffer_overflow);
                     if(ec)
                         goto upcall;
+
+                    BOOST_ASIO_HANDLER_LOCATION((
+                        __FILE__, __LINE__,
+                        "http::async_read_some"));
+
                     s_.async_read_some(*mb, std::move(self));
                 }
                 b_.commit(bytes_transferred);
@@ -219,7 +228,7 @@ public:
                         BOOST_ASSERT(p_.is_done());
                         goto upcall;
                     }
-                    ec = error::end_of_stream;
+                    BOOST_BEAST_ASSIGN_EC(ec, error::end_of_stream);
                     break;
                 }
                 if(ec)
@@ -230,8 +239,15 @@ public:
             if(! cont_)
             {
                 BOOST_ASIO_CORO_YIELD
+                {
+                    BOOST_ASIO_HANDLER_LOCATION((
+                        __FILE__, __LINE__,
+                        "http::async_read_some"));
+
                     net::post(
+                        s_.get_executor(),
                         beast::bind_front_handler(std::move(self), ec));
+                }
             }
             self.complete(ec, bytes_transferred_);
         }
@@ -264,15 +280,27 @@ public:
             if (Condition{}(p_))
             {
                 BOOST_ASIO_CORO_YIELD
-                    net::post(std::move(self));
+                {
+                    BOOST_ASIO_HANDLER_LOCATION((
+                        __FILE__, __LINE__,
+                        "http::async_read"));
+
+                    net::post(s_.get_executor(), std::move(self));
+                }
             }
             else
             {
                 do
                 {
                     BOOST_ASIO_CORO_YIELD
+                    {
+                        BOOST_ASIO_HANDLER_LOCATION((
+                            __FILE__, __LINE__,
+                            "http::async_read"));
+
                         async_read_some(
                             s_, b_, p_, std::move(self));
+                    }
                     bytes_transferred_ += bytes_transferred;
                 } while (!ec &&
                          !Condition{}(p_));
@@ -310,7 +338,7 @@ read_some(SyncReadStream& s, DynamicBuffer& b, basic_parser<isRequest>& p, error
         auto const size = read_size(b, 65536);
         if(size == 0)
         {
-            ec = error::buffer_overflow;
+            BOOST_BEAST_ASSIGN_EC(ec, error::buffer_overflow);
             return total;
         }
         auto const mb =
@@ -335,7 +363,7 @@ read_some(SyncReadStream& s, DynamicBuffer& b, basic_parser<isRequest>& p, error
                 BOOST_ASSERT(p.is_done());
                 return total;
             }
-            ec = error::end_of_stream;
+            BOOST_BEAST_ASSIGN_EC(ec, error::end_of_stream);
             break;
         }
         if(ec)

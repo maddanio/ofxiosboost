@@ -2,8 +2,8 @@
 
 // Copyright (c) 2007-2012 Barend Gehrels, Amsterdam, the Netherlands.
 
-// This file was modified by Oracle on 2017.
-// Modifications copyright (c) 2017, Oracle and/or its affiliates.
+// This file was modified by Oracle on 2017-2020.
+// Modifications copyright (c) 2017-2020, Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -16,7 +16,9 @@
 #include <cstddef>
 #include <string>
 
-#include <boost/range.hpp>
+#include <boost/range/begin.hpp>
+#include <boost/range/end.hpp>
+#include <boost/range/value_type.hpp>
 
 #include <boost/geometry/core/access.hpp>
 #include <boost/geometry/algorithms/detail/overlay/turn_info.hpp>
@@ -36,21 +38,11 @@ namespace detail { namespace overlay
 template <typename Turns>
 inline void clear_visit_info(Turns& turns)
 {
-    typedef typename boost::range_value<Turns>::type tp_type;
-
-    for (typename boost::range_iterator<Turns>::type
-        it = boost::begin(turns);
-        it != boost::end(turns);
-        ++it)
+    for (auto& turn : turns)
     {
-        for (typename boost::range_iterator
-            <
-                typename tp_type::container_type
-            >::type op_it = boost::begin(it->operations);
-            op_it != boost::end(it->operations);
-            ++op_it)
+        for (auto& op : turn.operations)
         {
-            op_it->visited.clear();
+            op.visited.clear();
         }
     }
 }

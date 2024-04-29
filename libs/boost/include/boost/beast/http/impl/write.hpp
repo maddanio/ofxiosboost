@@ -60,6 +60,10 @@ class write_some_op
             error_code& ec,
             ConstBufferSequence const& buffers)
         {
+            BOOST_ASIO_HANDLER_LOCATION((
+                __FILE__, __LINE__,
+                "http::async_write_some"));
+
             invoked = true;
             ec = {};
             op_.s_.async_write_some(
@@ -93,6 +97,11 @@ public:
             if(ec)
             {
                 BOOST_ASSERT(! f.invoked);
+
+                BOOST_ASIO_HANDLER_LOCATION((
+                    __FILE__, __LINE__,
+                    "http::async_write_some"));
+
                 return net::post(
                     s_.get_executor(),
                     beast::bind_front_handler(
@@ -106,6 +115,10 @@ public:
             // What else could it be?
             BOOST_ASSERT(sr_.is_done());
         }
+
+        BOOST_ASIO_HANDLER_LOCATION((
+            __FILE__, __LINE__,
+            "http::async_write_some"));
 
         return net::post(
             s_.get_executor(),
@@ -165,8 +178,18 @@ class write_op
     Stream& s_;
     serializer<isRequest, Body, Fields>& sr_;
     std::size_t bytes_transferred_ = 0;
+    net::cancellation_state st_{this->
+        beast::async_base<Handler, beast::executor_type<Stream>>
+            ::get_cancellation_slot()};
 
 public:
+    using cancellation_slot_type = net::cancellation_slot;
+    cancellation_slot_type get_cancellation_slot() const noexcept
+    {
+        return st_.slot();
+    }
+
+
     template<class Handler_>
     write_op(
         Handler_&& h,
@@ -191,17 +214,33 @@ public:
             if(Predicate{}(sr_))
             {
                 BOOST_ASIO_CORO_YIELD
-                net::post(
-                    s_.get_executor(),
-                    std::move(*this));
+                {
+                    BOOST_ASIO_HANDLER_LOCATION((
+                        __FILE__, __LINE__,
+                        "http::async_write"));
+
+                    net::post(
+                        s_.get_executor(),
+                        std::move(*this));
+                }
                 goto upcall;
             }
             for(;;)
             {
                 BOOST_ASIO_CORO_YIELD
-                beast::http::async_write_some(
-                    s_, sr_, std::move(*this));
+                {
+                    BOOST_ASIO_HANDLER_LOCATION((
+                        __FILE__, __LINE__,
+                        "http::async_write"));
+
+                    beast::http::async_write_some(
+                        s_, sr_, std::move(*this));
+                }
                 bytes_transferred_ += bytes_transferred;
+                if (!ec && st_.cancelled() != net::cancellation_type::none)
+                {
+                    BOOST_BEAST_ASSIGN_EC(ec, net::error::operation_aborted);
+                }
                 if(ec)
                     goto upcall;
                 if(Predicate{}(sr_))
@@ -248,6 +287,10 @@ public:
     void
     operator()()
     {
+        BOOST_ASIO_HANDLER_LOCATION((
+            __FILE__, __LINE__,
+            "http::async_write(msg)"));
+
         async_write(s_, sr_, std::move(*this));
     }
 
